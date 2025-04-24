@@ -9,10 +9,10 @@ export default function MainScreen() {
     age: 29,
     bio: "Loves hiking, cooking, and spontaneous road trips.",
     photos: [
-      "/images/sample-profile1.jpg",
-      "/images/sample-profile2.jpg",
-      "/images/sample-profile3.jpg",
-    ],
+        "/images/apple.jpg",
+        "/images/orange.jpg",
+        "/images/banana.jpeg",
+      ],
     prompts: [
       { question: "My favorite food is", answer: "Pizza" },
       { question: "I'm really good at", answer: "Photography" },
@@ -22,6 +22,20 @@ export default function MainScreen() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4">
+      {/* Top Navigation Buttons */}
+      <div className="absolute top-4 left-4 space-x-2">
+        <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm hover:bg-blue-200">
+          🏠 Main
+        </button>
+        <button className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-sm hover:bg-yellow-200">
+          ✏️ Edit Profile
+        </button>
+        <button className="bg-purple-100 text-purple-800 px-3 py-1 rounded-md text-sm hover:bg-purple-200">
+          💖 Matches
+        </button>
+      </div>
+
+
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Profile Header */}
         <div className="p-4">
@@ -38,6 +52,7 @@ export default function MainScreen() {
               <div className="relative w-full h-96">
                 <img
                   src={photo}
+                  //maybe add captions to photo???
                   alt={`Profile Photo ${index + 1}`}
                   className="object-cover w-full h-full rounded-lg"
                 />
@@ -62,7 +77,7 @@ export default function MainScreen() {
           <button className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xl hover:bg-red-200">
             ✘
           </button>
-          <button className="bg-green-500 text-white px-6 py-2 rounded-full text-xl hover:bg-green-600">
+          <button className="bg-green-400 text-white px-4 py-2 rounded-full text-xl hover:bg-green-600">
             ❤️
           </button>
         </div>
