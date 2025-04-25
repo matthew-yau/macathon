@@ -93,12 +93,13 @@ export default function MainScreen() {
     const { data: allUsers, error: userError } = await supabase
       .from("users")
       .select("*");
+
     if (userError || !allUsers) {
       console.error("Error fetching users:", userError?.message);
       return;
     }
 
-    // 2. Get rejected users from relationships
+    // 2. Get rejected, liked, and matched users from relationships
     const { data: excludedRelationships, error: relError } = await supabase
       .from("user_relationships")
       .select("target_email")
@@ -114,13 +115,19 @@ export default function MainScreen() {
       excludedRelationships?.map((r) => r.target_email)
     );
 
-    // 3. Filter out current user and rejected users
+    // 3. Filter out current user and excluded users
     const filtered = allUsers.filter(
       (u: MyTableRow) =>
         u.email !== currentUser.email && !excludedEmails.has(u.email)
     );
 
-    // 4. Calculate and sort by similarity
+    // ❌ No one left
+    if (filtered.length === 0) {
+      setMatches([]);
+      return;
+    }
+
+    // 4. Sort by similarity
     const sorted = filtered
       .map((u) => ({
         user: u,
@@ -198,7 +205,8 @@ export default function MainScreen() {
         console.error("Failed to insert relationship: ", error.message);
       }
     }
-    setMatchIndex((prev) => (prev + 1) % matches.length);
+    setMatches((prev) => prev.filter((_, i) => i !== matchIndex));
+    setMatchIndex(0);
   };
   const handleLike = async () => {
     const target = matches[matchIndex];
@@ -274,21 +282,27 @@ export default function MainScreen() {
       return;
     }
 
-    setMatchIndex((prev) => (prev + 1) % matches.length);
+    setMatches((prev) => prev.filter((_, i) => i !== matchIndex));
+    setMatchIndex(0);
   };
 
   if (loading) return <div>Loading...</div>;
   if (!user || !userData || matches.length === 0)
     return (
-      <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 text-center space-y-4">
-          <h1 className="text-2xl font-semibold">
-            You’ve run out of matches 😢
-          </h1>
-          <p className="text-gray-500">
-            Please check back later — we’re working on finding more people for
-            you!
-          </p>
+      <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4 overflow-hidden">
+        <div className="w-full max-w-md h-full bg-white rounded-2xl shadow-lg flex flex-col">
+          {/* Top Navigation Bar (kept for consistency) */}
+          <TopNavButtons />
+
+          <div className="flex-1 flex flex-col justify-center items-center text-center p-6 space-y-4">
+            <h1 className="text-4xl font-semibold text-gray-800">
+              You’ve run out of study buddies 😢
+            </h1>
+            <p className="text-gray-500 text-base">
+              Please check back later — we’re working on finding more people for
+              you!
+            </p>
+          </div>
         </div>
       </div>
     );
