@@ -1,10 +1,9 @@
-// src/app/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import MainScreen from "./main_screen";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import MainScreen from "./main_screen_test";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -14,8 +13,9 @@ export default function Home() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         router.push("/login");
       } else {
@@ -27,13 +27,8 @@ export default function Home() {
     checkSession();
   }, [supabase, router]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!authenticated) {
-    return null; // This will not render while redirecting
-  }
+  if (loading) return <div>Loading...</div>;
+  if (!authenticated) return null;
 
   return <MainScreen />;
 }

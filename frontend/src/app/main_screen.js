@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function MainScreen() {
   // Sample profile data for multiple photos and prompts
@@ -16,7 +16,10 @@ export default function MainScreen() {
     prompts: [
       { question: "My favorite food is", answer: "Pizza" },
       { question: "I'm really good at", answer: "Photography" },
-      { question: "A fun fact about me", answer: "I’ve been to over 10 countries!" },
+      {
+        question: "A fun fact about me",
+        answer: "I’ve been to over 10 countries!",
+      },
     ],
   };
 
@@ -25,7 +28,9 @@ export default function MainScreen() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Profile Header */}
         <div className="p-4">
-          <h1 className="text-2xl font-semibold">{profileData.name}, {profileData.age}</h1>
+          <h1 className="text-2xl font-semibold">
+            {profileData.name}, {profileData.age}
+          </h1>
           <p className="text-gray-600 mt-1">{profileData.bio}</p>
         </div>
 
@@ -45,7 +50,9 @@ export default function MainScreen() {
 
               {/* Display Prompt */}
               <div className="space-y-2">
-                <p className="font-semibold">{profileData.prompts[index].question}</p>
+                <p className="font-semibold">
+                  {profileData.prompts[index].question}
+                </p>
                 <input
                   type="text"
                   value={profileData.prompts[index].answer}
