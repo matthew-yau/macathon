@@ -1,28 +1,34 @@
-'use client';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useRouter } from "next/navigation";
+import { FaHome } from "react-icons/fa";
+import { MdEdit } from "react-icons/md";
+import { GiHearts } from "react-icons/gi";
 
 export default function TopNavButtons() {
   const router = useRouter();
 
   return (
-    <div className="absolute top-4 left-4 space-x-2 z-50">
+    <div className="w-full flex justify-center gap-4 px-4 py-1 bg-[#202020] rounded-t-2xl">
       <button
-        onClick={() => router.push('/')}
-        className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm hover:bg-blue-200"
+        onClick={() => router.push("/")}
+        className="p-3 rounded-full hover:bg-blue-800 text-white transition duration-300 shadow-sm"
+        title="Main"
       >
-        🏠 Main
+        <FaHome size={20} />
       </button>
       <button
-        onClick={() => router.push('/editprofile')}
-        className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-sm hover:bg-yellow-200"
+        onClick={() => router.push("/editprofile")}
+        className="p-3 rounded-full hover:bg-yellow-800 text-white transition duration-300 shadow-sm"
+        title="Edit Profile"
       >
-        ✏️ Edit Profile
+        <MdEdit size={20} />
       </button>
       <button
-        onClick={() => router.push('/matches')}
-        className="bg-purple-100 text-purple-800 px-3 py-1 rounded-md text-sm hover:bg-purple-200"
+        onClick={() => router.push("/matches")}
+        className="p-3 rounded-full hover:bg-purple-800 text-white transition duration-300 shadow-sm"
+        title="Matches"
       >
-        💖 Matches
+        <GiHearts size={20} />
       </button>
     </div>
   );

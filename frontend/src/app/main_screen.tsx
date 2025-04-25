@@ -12,7 +12,7 @@ import { useWindowSize } from "react-use";
 import confetti from "canvas-confetti";
 import { GiCoffeeCup } from "react-icons/gi";
 import { RxCross1 } from "react-icons/rx";
-import TopNavButtons from '@/components/topnavbar';
+import TopNavButtons from "@/components/topnavbar";
 
 type MyTableRow = {
   email: string;
@@ -99,25 +99,25 @@ export default function MainScreen() {
     }
 
     // 2. Get rejected users from relationships
-    const { data: rejectedRelationships, error: relError } = await supabase
+    const { data: excludedRelationships, error: relError } = await supabase
       .from("user_relationships")
       .select("target_email")
-      .eq("email", currentUser.email)
-      .eq("action", "rejected");
+      .or("action.eq.rejected,action.eq.liked,action.eq.matched")
+      .eq("email", currentUser.email);
 
     if (relError) {
       console.error("Error fetching relationships:", relError.message);
       return;
     }
 
-    const rejectedEmails = new Set(
-      rejectedRelationships?.map((r) => r.target_email)
+    const excludedEmails = new Set(
+      excludedRelationships?.map((r) => r.target_email)
     );
 
     // 3. Filter out current user and rejected users
     const filtered = allUsers.filter(
       (u: MyTableRow) =>
-        u.email !== currentUser.email && !rejectedEmails.has(u.email)
+        u.email !== currentUser.email && !excludedEmails.has(u.email)
     );
 
     // 4. Calculate and sort by similarity
@@ -315,35 +315,35 @@ export default function MainScreen() {
 
   const age = calculateAge(currentMatch.birth_date);
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4">
-      {/* Top Navigation Bar */}
-      <TopNavButtons />
-      {showConfetti && <Confetti width={width} height={height} />}
-      {showMatchedText && (
-        <div
-          className="absolute z-50 top-1/2 left-1/2 transform -translate-y-1/2 animate-slideIn text-5xl italic font-bold bg-gradient-to-r from-red-500 to-orange-400 text-transparent bg-clip-text"
-          style={{
-            animationDuration: "0.8s",
-            animationFillMode: "forwards",
-          }}
-        >
-          MATCHED!
-        </div>
-      )}
+    <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4 overflow-hidden">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg flex flex-col max-h-[calc(100vh-2rem)] relative">
+        {/* Top Navigation Bar */}
+        <TopNavButtons />
 
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="p-4">
-          <h1 className="text-4xl font-semibold my-1">{currentMatch.name}</h1>
-          <p className="text-gray-600 mt-1">{currentMatch.study_level_id}</p>
-          <p className="text-gray-500 text-sm mt-4">
-            Similarity Score: {score.toFixed(2)}
-          </p>
-        </div>
+        {/* Confetti + Match Text */}
+        {showConfetti && <Confetti width={width} height={height} />}
+        {showMatchedText && (
+          <div
+            className="absolute z-50 top-1/2 left-1/2 transform -translate-y-1/2 animate-slideIn text-5xl italic font-bold bg-gradient-to-r from-red-500 to-orange-400 text-transparent bg-clip-text"
+            style={{ animationDuration: "0.8s", animationFillMode: "forwards" }}
+          >
+            MATCHED!
+          </div>
+        )}
 
-        <div className="overflow-y-scroll max-h-[calc(100vh-20rem)] p-4 space-y-6">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Header */}
+          <div>
+            <h1 className="text-4xl font-semibold my-1">{currentMatch.name}</h1>
+            <p className="text-gray-600 mt-1">{currentMatch.study_level_id}</p>
+            <p className="text-gray-500 text-sm mt-4">
+              Similarity Score: {score.toFixed(2)}
+            </p>
+          </div>
+          {/* Matched Content */}
           {combinedContent.map((item, index) => (
             <div key={index} className="space-y-4">
-              {/* Photo */}
               <div className="relative w-full h-96">
                 <img
                   src={item.photo}
@@ -352,19 +352,17 @@ export default function MainScreen() {
                 />
               </div>
 
-              {/* Prompt */}
               <div>
                 <p className="font-semibold">{item.prompt.question}</p>
                 <input
                   type="text"
-                  value={item.prompt.answer ?? ''}
+                  value={item.prompt.answer ?? ""}
                   readOnly
                   className="w-full p-2 border rounded-md bg-gray-100 mt-1"
                 />
               </div>
 
-
-              {/* Extra info box (only after first item) */}
+              {/* Extra Info Block */}
               {index === 0 && (
                 <div className="bg-gray-50 border rounded-xl p-4 my-8 shadow-sm">
                   <div className="grid grid-cols-2 gap-6 justify-items-center text-center">
@@ -373,7 +371,6 @@ export default function MainScreen() {
                       <p className="text-xs text-gray-500">Age</p>
                       <p className="font-semibold text-lg">{age}</p>
                     </div>
-
                     <div className="flex flex-col items-center gap-1 w-32">
                       <MdOutlinePerson2 className="text-blue-400" size={20} />
                       <p className="text-xs text-gray-500">Gender</p>
@@ -381,7 +378,6 @@ export default function MainScreen() {
                         {currentMatch.gender}
                       </p>
                     </div>
-
                     <div className="flex flex-col items-center gap-1 w-32">
                       <IoBookSharp className="text-green-500" size={20} />
                       <p className="text-xs text-gray-500">Faculty</p>
@@ -389,7 +385,6 @@ export default function MainScreen() {
                         {facultyName}
                       </p>
                     </div>
-
                     <div className="flex flex-col items-center gap-1 w-32">
                       <MdOutlinePerson2 className="text-yellow-500" size={20} />
                       <p className="text-xs text-gray-500">Intention</p>
@@ -402,22 +397,25 @@ export default function MainScreen() {
               )}
             </div>
           ))}
+          <div className="h-12" /> {/* Spacer at bottom */}
         </div>
 
-        {/* Like / Dislike Buttons */}
-        <div className="flex justify-between mt-6 p-4 bg-transparent">
-          <button
-            className="bg-red-100 text-red-600 px-6 py-3 rounded-full text-2xl hover:bg-red-300 hover:scale-110 active:scale-95 transition-transform duration-300"
-            onClick={handleNextMatch}
-          >
-            <RxCross1 />
-          </button>
-          <button
-            className="bg-purple-400 text-white px-6 py-3 rounded-full text-2xl hover:bg-purple-800 hover:scale-110 active:scale-95 transition-transform duration-300"
-            onClick={handleLike}
-          >
-            <GiCoffeeCup />
-          </button>
+        {/* Action Buttons */}
+        <div className="absolute bottom-4 left-0 w-full flex justify-between px-6 pointer-events-none">
+          <div className="flex w-full justify-between pointer-events-auto">
+            <button
+              className="bg-red-100 text-red-600 px-6 py-3 rounded-full text-4xl hover:bg-red-300 hover:scale-110 active:scale-95 transition-transform duration-300"
+              onClick={handleNextMatch}
+            >
+              <RxCross1 />
+            </button>
+            <button
+              className="bg-purple-400 text-white px-6 py-3 rounded-full text-4xl hover:bg-purple-800 hover:scale-110 active:scale-95 transition-transform duration-300"
+              onClick={handleLike}
+            >
+              <GiCoffeeCup />
+            </button>
+          </div>
         </div>
       </div>
     </div>
