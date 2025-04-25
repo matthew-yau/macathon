@@ -25,13 +25,7 @@ export default function Register() {
   
   // Multi-select fields
   const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
-  
-  // Prompt fields - new structure
-  const [selectedPrompts, setSelectedPrompts] = useState<Array<{prompt: string, answer: string}>>([
-    { prompt: "", answer: "" },
-    { prompt: "", answer: "" },
-    { prompt: "", answer: "" }
-  ]);
+  const [selectedPrompts, setSelectedPrompts] = useState<string[]>([]);
   
   // Form state
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +90,7 @@ export default function Register() {
     "If we get stuck on a problem, my first move is...",
     "I'll always share my best flashcards on...",
     "The worst study advice I've ever received is...",
-    "Let’s debate: group study vs. solo grind—who wins?",
+    "Let's debate: group study vs. solo grind—who wins?",
     "My secret motivator when deadlines loom is...",
     "One thing that makes a study sesh 10× better is...",
     "I bookmark articles on...",
@@ -113,17 +107,13 @@ export default function Register() {
     );
   };
 
-  // Handle prompt and answer updates
-  const updatePromptAndAnswer = (index: number, field: 'prompt' | 'answer', value: string) => {
-    setSelectedPrompts(prev => {
-      const newPrompts = [...prev];
-      if (field === 'prompt') {
-        newPrompts[index] = { ...newPrompts[index], prompt: value };
-      } else {
-        newPrompts[index] = { ...newPrompts[index], answer: value };
-      }
-      return newPrompts;
-    });
+  // Handle prompt selection
+  const togglePrompt = (prompt: string) => {
+    setSelectedPrompts(prev => 
+      prev.includes(prompt) 
+        ? prev.filter(p => p !== prompt) 
+        : [...prev, prompt]
+    );
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -145,9 +135,9 @@ export default function Register() {
       return;
     }
   
-    // Validate prompts and answers
-    if (selectedPrompts.some(p => !p.prompt || !p.answer)) {
-      setError("Please select all prompts and provide answers");
+    // Validate at least one hobby and prompt
+    if (selectedHobbies.length === 0 || selectedPrompts.length === 0) {
+      setError("Please select at least one hobby and one prompt");
       setLoading(false);
       return;
     }
@@ -286,8 +276,8 @@ export default function Register() {
         }
       }
   
-      // Step 6: Process prompts with answers
-      for (const { prompt: promptText, answer } of selectedPrompts) {
+      // Step 6: Process prompts - create if they don't exist
+      for (const promptText of selectedPrompts) {
         // Check if prompt exists or create it
         let promptId;
         
@@ -309,19 +299,18 @@ export default function Register() {
           
           if (insertPromptError) {
             console.error(`Error creating prompt ${promptText}:`, insertPromptError);
-            continue;
+            continue; // Skip this prompt but continue with others
           }
           
           promptId = newPrompt.id;
         }
         
-        // Create user-prompt relationship with answer
+        // Create user-prompt relationship
         const { error: promptRelError } = await supabase
           .from('user_prompts')
           .insert({
             user_email: email,
-            prompt_id: promptId,
-            answer: answer
+            prompt_id: promptId
           });
         
         if (promptRelError) {
@@ -521,7 +510,7 @@ export default function Register() {
           </div>
 
           {/* Hobbies Section */}
-          {/* <div className="rounded-md bg-yellow-50 p-4">
+          <div className="rounded-md bg-yellow-50 p-4">
             <h2 className="mb-4 text-xl font-semibold text-yellow-800">
               Hobbies & Interests
               <span className="ml-2 text-sm font-normal text-yellow-700">(Select at least one)</span>
@@ -542,52 +531,27 @@ export default function Register() {
                 </div>
               ))}
             </div>
-          </div> */}
+          </div>
 
           {/* Prompts Section */}
           <div className="rounded-md bg-pink-50 p-4">
             <h2 className="mb-4 text-xl font-semibold text-pink-800">
               Conversation Starters
-              <span className="ml-2 text-sm font-normal text-pink-700">(Fill all three)</span>
+              <span className="ml-2 text-sm font-normal text-pink-700">(Select at least one)</span>
             </h2>
-            <div className="space-y-6">
-              {[0, 1, 2].map((index) => (
-                <div key={index} className="space-y-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Prompt {index + 1}
-                    </label>
-                    <select
-                      value={selectedPrompts[index].prompt}
-                      onChange={(e) => updatePromptAndAnswer(index, 'prompt', e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
-                    >
-                      <option value="">Select a prompt</option>
-                      {promptOptions.map((prompt) => (
-                        <option 
-                          key={prompt} 
-                          value={prompt}
-                          disabled={selectedPrompts.some((p, i) => i !== index && p.prompt === prompt)}
-                        >
-                          {prompt}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Your Answer
-                    </label>
-                    <textarea
-                      value={selectedPrompts[index].answer}
-                      onChange={(e) => updatePromptAndAnswer(index, 'answer', e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
-                      rows={3}
-                      placeholder="Type your answer here..."
-                    />
-                  </div>
+            <div className="space-y-2">
+              {promptOptions.map((prompt) => (
+                <div key={prompt} className="flex items-center">
+                  <input
+                    id={`prompt-${prompt}`}
+                    type="checkbox"
+                    checked={selectedPrompts.includes(prompt)}
+                    onChange={() => togglePrompt(prompt)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor={`prompt-${prompt}`} className="ml-2 text-sm text-gray-700">
+                    {prompt}
+                  </label>
                 </div>
               ))}
             </div>
