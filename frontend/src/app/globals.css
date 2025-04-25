@@ -22,6 +22,22 @@
     --foreground: #ededed;
   }
 }
+@keyframes slideIn {
+  0% {
+    transform: translateX(-5cm) translateY(-50%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-50%);
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .animate-slideIn {
+    animation: slideIn 0.8s ease-out forwards;
+  }
+}
 
 body {
   background: var(--background);
