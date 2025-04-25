@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import MainScreen from "./main_screen_test";
+import MainScreen from "./main_screen";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
