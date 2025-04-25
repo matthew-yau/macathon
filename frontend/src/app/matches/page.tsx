@@ -43,36 +43,53 @@ const Chat = () => {
       getUser();
     }, []);
   
-    // 👥 Fetch matches
     useEffect(() => {
-      const fetchMatches = async () => {
-        if (!currentUserId) return;
-  
-        const { data, error } = await supabase
-          .from('user_relationships')
-          .select('email, target_email')
-          .eq('action', 'matched')
-          .or(`email.eq.${currentUserId},target_email.eq.${currentUserId}`);
-  
-        if (data) {
-          const uniqueEmails = new Set<string>();
-          const matchedUsers = data
-            .map((match) =>
-              match.email === currentUserId ? match.target_email : match.email
-            )
-            .filter((email) => {
-              if (uniqueEmails.has(email)) return false;
-              uniqueEmails.add(email);
-              return true;
-            })
-            .map((email) => ({ user_id: email, name: email }));
-  
-          setMatches(matchedUsers);
-        }
-      };
-  
-      fetchMatches();
-    }, [currentUserId]);
+        const fetchMatches = async () => {
+          if (!currentUserId) return;
+      
+          const { data, error } = await supabase
+            .from('user_relationships')
+            .select('email, target_email')
+            .eq('action', 'matched')
+            .or(`email.eq.${currentUserId},target_email.eq.${currentUserId}`);
+      
+          if (error) {
+            console.error('Error fetching matches:', error.message);
+            return;
+          }
+      
+          if (data) {
+            // Extract unique emails of matched users
+            const matchedEmails = data
+              .map((match) =>
+                match.email === currentUserId ? match.target_email : match.email
+              )
+              .filter((email, index, self) => self.indexOf(email) === index);
+      
+            // Fetch user names for matched emails
+            const { data: usersData, error: usersError } = await supabase
+              .from('users')
+              .select('email, name')
+              .in('email', matchedEmails);
+      
+            if (usersError) {
+              console.error('Error fetching user names:', usersError.message);
+              return;
+            }
+      
+            // Map matched emails to user names
+            const matchedUsers = usersData.map((user) => ({
+              user_id: user.email,
+              name: user.name,
+            }));
+      
+            setMatches(matchedUsers);
+          }
+        };
+      
+        fetchMatches();
+      }, [currentUserId]);
+      
   
     // 💬 Fetch messages when selecting a match
     useEffect(() => {
@@ -164,13 +181,13 @@ const Chat = () => {
   
         {/* Chat Section */}
         <div className="w-full flex flex-col items-center pt-10">
-          <div className="flex justify-between items-center mb-4 w-full max-w-xl px-4">
+            <div className="flex justify-between items-center mb-4 w-full max-w-xl pl-2"> 
             <h2 className="text-2xl font-semibold">
               {selectedMatch ? `Chat with ${selectedMatch.name}` : 'Select a match'}
             </h2>
           </div>
   
-          <div className="flex-1 overflow-y-auto space-y-4 mb-6 w-full max-w-xl px-4">
+          <div className="flex-1 overflow-y-auto space-y-4 mb-6 w-full max-w-4xl px-4">
             {messages.map((msg, idx) => (
               <div
                 key={`${msg.timestamp}-${idx}`}
@@ -188,13 +205,13 @@ const Chat = () => {
           </div>
   
           {selectedMatch && (
-            <div className="flex items-center space-x-2 w-full max-w-xl px-4">
+            <div className="flex items-center space-x-2 w-full max-w-4xl px-4">
               <input
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={handleKeyPress}
-                className="w-full p-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full p-3 rounded-lg border-2 border-gray-300 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Type a message..."
               />
               <button
