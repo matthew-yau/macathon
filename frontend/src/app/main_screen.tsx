@@ -354,11 +354,12 @@ export default function MainScreen() {
                 <p className="font-semibold">{item.prompt.question}</p>
                 <input
                   type="text"
-                  value={item.prompt.answer}
+                  value={item.prompt.answer ?? ''}
                   readOnly
                   className="w-full p-2 border rounded-md bg-gray-100 mt-1"
                 />
               </div>
+
 
               {/* Extra info box (only after first item) */}
               {index === 0 && (
