@@ -22,7 +22,7 @@ export default function TopNavButtons() {
         onClick={() => router.push('/matches')}
         className="bg-purple-100 text-purple-800 px-3 py-1 rounded-md text-sm hover:bg-purple-200"
       >
-        💖 Matches
+        📱 Chat
       </button>
     </div>
   );
