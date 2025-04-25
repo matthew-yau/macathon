@@ -1,13 +1,25 @@
 'use client';
-
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import TopNavButtons from '@/components/topnavbar';
 
 export default function MainScreen() {
+
+  const router = useRouter();
+
+  const goToEditProfile = () => {
+    router.push('/edit-profile'); 
+  };
+
   // Sample profile data for multiple photos and prompts
   const profileData = {
     name: "Alex",
     age: 29,
-    bio: "Loves hiking, cooking, and spontaneous road trips.",
+    gender: "Male",
+    study: "Undergraduate",
+    faculty: "Engineering",
+    hobbies: ["Reading", "Hiking", "Cooking"],
+    intentions: "Networking",
     photos: [
         "/images/apple.jpg",
         "/images/orange.jpg",
@@ -22,26 +34,33 @@ export default function MainScreen() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4">
-      
-      {/* Top Navigation Buttons */}
-      <div className="absolute top-4 left-4 space-x-2">
-        <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm hover:bg-blue-200">
-          🏠 Main
-        </button>
-        <button className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-sm hover:bg-yellow-200">
-          ✏️ Edit Profile
-        </button>
-        <button className="bg-purple-100 text-purple-800 px-3 py-1 rounded-md text-sm hover:bg-purple-200">
-          💖 Matches
-        </button>
-      </div>
 
+      {/* Top Navigation Buttons */}
+      <TopNavButtons />
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Profile Header */}
         <div className="p-4">
           <h1 className="text-2xl font-semibold">{profileData.name}, {profileData.age}</h1>
-          <p className="text-gray-600 mt-1">{profileData.bio}</p>
+        </div>
+
+        {/* Options Display */}
+        <div className="p-4 space-y-2">
+          {/* Options (on a single line) */}
+          <div className="flex gap-1 overflow-x-auto whitespace-nowrap -mt-4">
+            {/* Gender */}
+            <span className="px-2 py-1 rounded-full bg-blue-200 text-blue-800 text-xs">{profileData.gender}</span>
+            {/* Study Program */}
+            <span className="px-2 py-1 rounded-full bg-green-200 text-green-800 text-xs">{profileData.study}</span>
+            {/* Faculty */}
+            <span className="px-2 py-1 rounded-full bg-yellow-200 text-yellow-800 text-xs">{profileData.faculty}</span>
+            {/* Hobbies */}
+            {profileData.hobbies.map((hobby, index) => (
+              <span key={index} className="px-2 py-1 rounded-full bg-purple-200 text-purple-800 text-xs">{hobby}</span>
+            ))}
+            {/* Intentions */}
+            <span className="px-2 py-1 rounded-full bg-red-200 text-red-800 text-xs">{profileData.intentions}</span>
+          </div>
         </div>
 
         {/* Scrollable Profile Content */}
@@ -53,7 +72,6 @@ export default function MainScreen() {
               <div className="relative w-full h-96">
                 <img
                   src={photo}
-                  //maybe add captions to photo???
                   alt={`Profile Photo ${index + 1}`}
                   className="object-cover w-full h-full rounded-lg"
                 />
