@@ -7,6 +7,11 @@ import { User } from "@supabase/supabase-js";
 import { FaBirthdayCake } from "react-icons/fa";
 import { MdOutlinePerson2 } from "react-icons/md";
 import { IoBookSharp } from "react-icons/io5";
+import Confetti from "react-confetti";
+import { useWindowSize } from "react-use";
+import confetti from "canvas-confetti";
+import { GiCoffeeCup } from "react-icons/gi";
+import { RxCross1 } from "react-icons/rx";
 
 type MyTableRow = {
   email: string;
@@ -31,6 +36,10 @@ export default function MainScreen() {
   const [userPrompts, setUserPrompts] = useState<
     { question: string; answer: string }[]
   >([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { width, height } = useWindowSize();
+  const [isMatched, setIsMatched] = useState(false);
+  const [showMatchedText, setShowMatchedText] = useState(false);
 
   const supabase = createClientComponentClient();
   const router = useRouter();
@@ -79,17 +88,39 @@ export default function MainScreen() {
   };
 
   const fetchAndSortMatches = async (currentUser: MyTableRow) => {
-    const { data: allUsers, error } = await supabase.from("users").select("*");
-
-    if (error || !allUsers) {
-      console.error("Error fetching all users:", error?.message);
+    // 1. Get all users
+    const { data: allUsers, error: userError } = await supabase
+      .from("users")
+      .select("*");
+    if (userError || !allUsers) {
+      console.error("Error fetching users:", userError?.message);
       return;
     }
 
-    const others = allUsers.filter(
-      (u: MyTableRow) => u.email !== currentUser.email
+    // 2. Get rejected users from relationships
+    const { data: rejectedRelationships, error: relError } = await supabase
+      .from("user_relationships")
+      .select("target_email")
+      .eq("email", currentUser.email)
+      .eq("action", "rejected");
+
+    if (relError) {
+      console.error("Error fetching relationships:", relError.message);
+      return;
+    }
+
+    const rejectedEmails = new Set(
+      rejectedRelationships?.map((r) => r.target_email)
     );
-    const sorted = others
+
+    // 3. Filter out current user and rejected users
+    const filtered = allUsers.filter(
+      (u: MyTableRow) =>
+        u.email !== currentUser.email && !rejectedEmails.has(u.email)
+    );
+
+    // 4. Calculate and sort by similarity
+    const sorted = filtered
       .map((u) => ({
         user: u,
         score: -calculateSimilarity(currentUser, u),
@@ -168,10 +199,98 @@ export default function MainScreen() {
     }
     setMatchIndex((prev) => (prev + 1) % matches.length);
   };
+  const handleLike = async () => {
+    const target = matches[matchIndex];
+    if (!userData || !target) return;
+
+    // Check if they already liked you
+    const { data: existingLike, error: likeError } = await supabase
+      .from("user_relationships")
+      .select("*")
+      .eq("email", target.email)
+      .eq("target_email", userData.email)
+      .eq("action", "liked")
+      .single();
+
+    if (likeError && likeError.code !== "PGRST116") {
+      console.error("Error checking existing like:", likeError.message);
+      return;
+    }
+
+    if (existingLike) {
+      // Insert 'matched' relationship both ways
+      const { error: matchError } = await supabase
+        .from("user_relationships")
+        .upsert([
+          {
+            email: userData.email,
+            target_email: target.email,
+            action: "matched",
+          },
+          {
+            email: target.email,
+            target_email: userData.email,
+            action: "matched",
+          },
+        ]);
+
+      if (matchError) {
+        console.error("Error inserting match:", matchError.message);
+        return;
+      }
+
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { x: 0.5, y: 0.5 }, // center of the screen
+      });
+
+      setShowMatchedText(true); // <-- show the "MATCHED" text
+
+      setTimeout(() => {
+        setShowConfetti(false);
+        setShowMatchedText(false); // <-- hide the text too
+        setMatchIndex((prev) => (prev + 1) % matches.length);
+      }, 2000); // confetti + text for 2 seconds
+
+      setIsMatched(true); // 🔥 tell React we are in a match
+      return; // Exit here so we don’t call setMatchIndex too early
+    }
+
+    // Just a normal like
+    const { error: likeInsertError } = await supabase
+      .from("user_relationships")
+      .insert([
+        {
+          email: userData.email,
+          target_email: target.email,
+          action: "liked",
+        },
+      ]);
+
+    if (likeInsertError) {
+      console.error("Error inserting like:", likeInsertError.message);
+      return;
+    }
+
+    setMatchIndex((prev) => (prev + 1) % matches.length);
+  };
 
   if (loading) return <div>Loading...</div>;
   if (!user || !userData || matches.length === 0)
-    return <div>No matches found.</div>;
+    return (
+      <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 text-center space-y-4">
+          <h1 className="text-2xl font-semibold">
+            You’ve run out of matches 😢
+          </h1>
+          <p className="text-gray-500">
+            Please check back later — we’re working on finding more people for
+            you!
+          </p>
+        </div>
+      </div>
+    );
 
   const currentMatch = matches[matchIndex];
   const fallbackPhotos = [
@@ -196,6 +315,19 @@ export default function MainScreen() {
   const age = calculateAge(currentMatch.birth_date);
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4">
+      {showConfetti && <Confetti width={width} height={height} />}
+      {showMatchedText && (
+        <div
+          className="absolute z-50 top-1/2 left-1/2 transform -translate-y-1/2 animate-slideIn text-5xl italic font-bold bg-gradient-to-r from-red-500 to-orange-400 text-transparent bg-clip-text"
+          style={{
+            animationDuration: "0.8s",
+            animationFillMode: "forwards",
+          }}
+        >
+          MATCHED!
+        </div>
+      )}
+
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="p-4">
           <h1 className="text-4xl font-semibold my-1">{currentMatch.name}</h1>
@@ -269,18 +401,18 @@ export default function MainScreen() {
         </div>
 
         {/* Like / Dislike Buttons */}
-        <div className="flex justify-between mt-6 p-4">
+        <div className="flex justify-between mt-6 p-4 bg-transparent">
           <button
-            className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xl hover:bg-red-200"
+            className="bg-red-100 text-red-600 px-6 py-3 rounded-full text-2xl hover:bg-red-300 hover:scale-110 active:scale-95 transition-transform duration-300"
             onClick={handleNextMatch}
           >
-            ✘
+            <RxCross1 />
           </button>
           <button
-            className="bg-green-400 text-white px-4 py-2 rounded-full text-xl hover:bg-green-600"
-            onClick={() => alert("Like functionality not implemented yet")}
+            className="bg-purple-400 text-white px-6 py-3 rounded-full text-2xl hover:bg-purple-800 hover:scale-110 active:scale-95 transition-transform duration-300"
+            onClick={handleLike}
           >
-            ❤️
+            <GiCoffeeCup />
           </button>
         </div>
       </div>
