@@ -12,6 +12,7 @@ import { useWindowSize } from "react-use";
 import confetti from "canvas-confetti";
 import { GiCoffeeCup } from "react-icons/gi";
 import { RxCross1 } from "react-icons/rx";
+import TopNavButtons from '@/components/topnavbar';
 
 type MyTableRow = {
   email: string;
@@ -315,6 +316,8 @@ export default function MainScreen() {
   const age = calculateAge(currentMatch.birth_date);
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center p-4">
+      {/* Top Navigation Bar */}
+      <TopNavButtons />
       {showConfetti && <Confetti width={width} height={height} />}
       {showMatchedText && (
         <div
