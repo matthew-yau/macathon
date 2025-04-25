@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import TopNavButtons from '@/components/topnavbar'; // Make sure to import your TopNavButtons component
+import TopNavButtons from '@/components/topnavbar';
 
 const genderOptions = ['Male', 'Female', 'Other'];
 const studyOptions = ['Undergraduate', 'Postgraduate', 'PHD'];
@@ -19,6 +19,7 @@ export default function EditProfilePage() {
     hobbies: [] as string[],
     intentions: '',
     prompts: ['', '', ''],
+    profileImages: [null, null, null] as (File | null)[],
   });
 
   const handleChange = (field: string, value: any) => {
@@ -34,12 +35,11 @@ export default function EditProfilePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form data:', formData);
-    // Later: Save to Supabase or your backend service
+    // Later: Save to backend or Supabase
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-start p-6">
-      {/* Top Navigation Buttons */}
       <TopNavButtons />
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md w-full max-w-xl space-y-4 mt-16">
@@ -123,6 +123,48 @@ export default function EditProfilePage() {
             <option key={i} value={i}>{i}</option>
           ))}
         </select>
+
+        {/* Profile Image Upload - 3 Fixed Slots */}
+        <div className="space-y-2">
+        <label className="block font-semibold">Profile Pictures (Max 3)</label>
+        <div className="grid grid-cols-3 gap-4">
+            {[0, 1, 2].map((index) => (
+            <div key={index} className="relative group w-full aspect-square bg-gray-100 border border-dashed border-gray-400 rounded-md overflow-hidden">
+                <label className="absolute inset-0 flex items-center justify-center cursor-pointer z-10">
+                {formData.profileImages[index] ? (
+                    <>
+                    <img
+                        src={URL.createObjectURL(formData.profileImages[index] as File)}
+                        alt={`Profile ${index + 1}`}
+                        className="object-cover w-full h-full"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-sm font-medium">
+                        Change Photo
+                    </div>
+                    </>
+                ) : (
+                    <div className="flex flex-col items-center justify-center text-gray-500 text-sm w-full h-full">
+                    <span>Click to upload</span>
+                    </div>
+                )}
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const newImages = [...formData.profileImages];
+                    newImages[index] = file;
+                    handleChange('profileImages', newImages);
+                    }}
+                    className="hidden"
+                />
+                </label>
+            </div>
+            ))}
+        </div>
+        </div>
+
 
         <div className="space-y-2">
           {formData.prompts.map((prompt, idx) => (
